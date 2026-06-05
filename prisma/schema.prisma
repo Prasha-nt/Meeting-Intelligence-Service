@@ -1,0 +1,59 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  name      String
+  meetings  Meeting[]
+  createdAt DateTime  @default(now())
+}
+
+model Meeting {
+  id           String       @id @default(uuid())
+  title        String
+  participants String       // JSON array of strings: e.g. ["alice@example.com", "bob@example.com"]
+  meetingDate  DateTime
+  transcript   String       // JSON array of objects: [{ timestamp: string, speaker: string, text: string }]
+  
+  // AI-generated analysis fields
+  summary      String?      // JSON array: [{ text: string, citations: [{ timestamp: string }] }]
+  decisions    String?      // JSON array: [{ text: string, citations: [{ timestamp: string }] }]
+  followUps    String?      // JSON array: [{ text: string, citations: [{ timestamp: string }] }]
+  
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actionItems  ActionItem[]
+  createdAt    DateTime     @default(now())
+}
+
+model ActionItem {
+  id               String            @id @default(uuid())
+  task             String
+  assignee         String
+  dueDate          DateTime
+  status           String            @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  citations        String            // JSON array of objects: [{ timestamp: string }]
+  
+  meetingId        String
+  meeting          Meeting           @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  reminders        ReminderHistory[]
+  createdAt        DateTime          @default(now())
+}
+
+model ReminderHistory {
+  id           String     @id @default(uuid())
+  actionItemId String
+  actionItem   ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  sentAt       DateTime   @default(now())
+  status       String     // SUCCESS, FAILED
+  error        String?
+  integration  String     // e.g. "Slack Webhook" or "Resend Email"
+}
