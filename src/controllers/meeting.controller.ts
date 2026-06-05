@@ -83,7 +83,7 @@ export async function listMeetings(req: Request, res: Response, next: NextFuncti
       orderBy: { meetingDate: 'desc' }
     });
 
-    const formattedMeetings = meetings.map(m => ({
+    const formattedMeetings = meetings.map((m: any) => ({
       id: m.id,
       title: m.title,
       participants: JSON.parse(m.participants),
